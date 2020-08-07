@@ -4,7 +4,9 @@ Search, download and compress anime on fly to small size without losing much fro
 Installation and running:
 >move shelltear.loli to golang src, or set gopath to the directory.
 
->run 'go get -u -v -f all' to install all other dependencies.
+>run 'go get -u -v -f all' to install all other go dependencies.
+
+>install youtube-dl and ffmpeg with needed features.
 
 Usage:
 >send get request to localhost:8080/getid/:name, where :name is anime name, this will give you an id you need to provide to the downloader.
