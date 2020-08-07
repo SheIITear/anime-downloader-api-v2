@@ -2,6 +2,10 @@ package unmarshal
 
 import "encoding/json"
 
+/*
+	Used to unmarshal the output from a request so the main file won't be filled with these.
+*/
+
 func UnmarshalAnimedown3(data []byte) (Animedown3, error) {
 	var r Animedown3
 	err := json.Unmarshal(data, &r)
