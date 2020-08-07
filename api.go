@@ -43,7 +43,7 @@ func FindAnimeID(name string) string {
 
 	if err != nil {
 		fmt.Println(err)
-		return
+		return "error"
 	}
 
 	req.Header.Set("Authority", "animeflix.io")
@@ -58,7 +58,7 @@ func FindAnimeID(name string) string {
 
 	if err != nil {
 		fmt.Println(err)
-		return
+		return "error"
 	}
 
 	defer resp.Body.Close()
@@ -67,7 +67,7 @@ func FindAnimeID(name string) string {
 
 	if err != nil {
 		fmt.Println(err)
-		return
+		return "error"
 	}
 
 	output2, err := un.UnmarshalAnimedown3(out)
@@ -77,13 +77,14 @@ func FindAnimeID(name string) string {
 
 	if err != nil {
 		fmt.Println(err)
+		return "error"
 	}
 
 	resp, err = http.DefaultClient.Do(req)
 
 	if err != nil {
 		fmt.Println(err)
-		return
+		return "error"
 	}
 
 	defer resp.Body.Close()
@@ -92,7 +93,7 @@ func FindAnimeID(name string) string {
 
 	if err != nil {
 		fmt.Println(err)
-		return
+		return "error"
 	}
 
 	output, err := un.UnmarshalAnimedown(out)
@@ -114,7 +115,7 @@ func FindLinksOfID(id string, onlyinfo string) string {
 
 	if err != nil {
 		fmt.Println(err)
-		return
+		return "error"
 	}
 
 	req.Header.Set("Authority", "animeflix.io")
@@ -129,7 +130,7 @@ func FindLinksOfID(id string, onlyinfo string) string {
 
 	if err != nil {
 		fmt.Println(err)
-		return
+		return "error"
 	}
 
 	defer resp.Body.Close()
@@ -138,14 +139,14 @@ func FindLinksOfID(id string, onlyinfo string) string {
 
 	if err != nil {
 		fmt.Println(err)
-		return
+		return "error"
 	}
 
 	output, err := un.UnmarshalAnimedown2(out)
 
 	if err != nil {
 		fmt.Println(err)
-		return
+		return "error"
 	}
 
 	var links string
@@ -180,7 +181,7 @@ func DownloadAnime(link string, id string) string {
 
 	if err != nil {
 		fmt.Println(err)
-		return
+		return "error"
 	}
 
 	reallink := string(link2[:])
@@ -197,6 +198,7 @@ func DownloadAnime(link string, id string) string {
 
 	if err := stream.Build(); err != nil {
 		fmt.Println(err)
+		return "error"
 	}
 
 	return "done"
