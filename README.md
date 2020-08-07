@@ -14,7 +14,9 @@ Usage:
 >send get request to localhost:8080/getlinks/:id/:onlyinfo, where :id is the id from earlier step and :onlyinfo is a boolean, to either download or just print the infomation.
 
 TODO:
+   
    -add json output
+   
    -cleaner code
 
 ## Disclaimer
