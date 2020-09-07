@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/url"
 	"os/exec"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -164,8 +165,13 @@ func FindLinksOfID(id string, onlyinfo string) string {
 				break
 			}
 		}
-		links = DownloadAnime(links, id)
+		if links == "" {
+			fmt.Println("Failed to get link")
+			return "error"
+		}
 	}
+
+	links = DownloadAnime(links, id)
 	return links
 }
 
@@ -173,7 +179,29 @@ func DownloadAnime(link string, id string) string {
 
 	fix := strings.Split(link, "://")
 	fix[0] = "http"
-	command := "youtube-dl -f 1092-0 -g " + strings.Join(fix, "://")
+	link = strings.Join(fix, "://")
+
+	re := regexp.MustCompile(`(109[0-9]|1100)`)
+
+	command1 := "youtube-dl --list-formats " + link
+	cmdString1 := strings.TrimSuffix(command1, "\n")
+	cmdString3 := strings.Fields(cmdString1)
+
+	format, err := exec.Command(cmdString3[0], cmdString3[1:]...).Output()
+
+	if err != nil {
+		fmt.Println(err)
+		return "error"
+	}
+
+	formatReal := string(format[:])
+	formatReal = strings.TrimSuffix(formatReal, "\n")
+
+	formatReal = re.FindString(formatReal) + "-0"
+
+	fmt.Println("Format -> " + formatReal)
+
+	command := "youtube-dl -f " + formatReal + " -g " + link
 	cmdString := strings.TrimSuffix(command, "\n")
 	cmdString2 := strings.Fields(cmdString)
 
@@ -183,6 +211,8 @@ func DownloadAnime(link string, id string) string {
 		fmt.Println(err)
 		return "error"
 	}
+
+	fmt.Println("Downloading -> " + id)
 
 	reallink := string(link2[:])
 	reallink = strings.TrimSuffix(reallink, "\n")
