@@ -38,7 +38,7 @@ func main() {
 		c.String(http.StatusOK, "%s", links)
 	})
 
-	router.Run(":1337")
+	router.Run(":8080")
 }
 
 func FindAnimeID(name string) string {
