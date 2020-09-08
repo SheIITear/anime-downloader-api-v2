@@ -9,11 +9,14 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/amiraliio/gompeg"
 	"github.com/gin-gonic/gin"
 	un "shelltear.loli/unmarshal"
 )
+
+var links string
 
 func main() {
 	router := gin.Default()
@@ -35,7 +38,7 @@ func main() {
 		c.String(http.StatusOK, "%s", links)
 	})
 
-	router.Run(":8080")
+	router.Run(":1337")
 }
 
 func FindAnimeID(name string) string {
@@ -150,29 +153,74 @@ func FindLinksOfID(id string, onlyinfo string) string {
 		return "error"
 	}
 
-	var links string
-
 	if onlyinfo == "true" {
 		for i := range output {
 			links += "ID: " + output[i].ID + "\nFile: " + output[i].File +
 				"\nType: " + output[i].Type + "\nLang: " + output[i].Lang +
 				"\nThumb: " + output[i].Thumbnail + "\n\n"
 		}
-	} else {
-		for i := range output {
-			if output[i].Type == "hls" {
-				links = output[i].File
-				break
-			}
-		}
-		if links == "" {
-			fmt.Println("Failed to get link")
-			return "error"
+		return links
+	}
+	fmt.Println("Getting link...")
+
+	for i := range output {
+		if output[i].Type == "hls" {
+			links = output[i].File
+			break
 		}
 	}
 
+	if links == "" {
+		fmt.Println("Failed to get link")
+		return "error"
+	}
+
+	fmt.Println("Link -> " + links)
+
 	links = DownloadAnime(links, id)
 	return links
+}
+
+func CheckLink() <-chan string {
+	r := make(chan string)
+
+	go func() {
+		defer close(r)
+		newtimer := time.NewTimer(10 * time.Second)
+		<-newtimer.C
+		r <- "error"
+	}()
+
+	return r
+}
+
+func GetFormat() <-chan string {
+	r := make(chan string)
+
+	go func() {
+		defer close(r)
+		fmt.Println("Getting format...")
+		re := regexp.MustCompile(`(109[0-9]|1100)`)
+
+		command1 := "youtube-dl --list-formats " + links
+		cmdString1 := strings.TrimSuffix(command1, "\n")
+		cmdString3 := strings.Fields(cmdString1)
+
+		format, err := exec.Command(cmdString3[0], cmdString3[1:]...).Output()
+
+		if err != nil {
+			fmt.Println(err)
+			r <- "error"
+		}
+
+		formatReal := string(format[:])
+		formatReal = strings.TrimSuffix(formatReal, "\n")
+
+		formatReal = re.FindString(formatReal) + "-0"
+		r <- formatReal
+	}()
+
+	return r
 }
 
 func DownloadAnime(link string, id string) string {
@@ -180,32 +228,24 @@ func DownloadAnime(link string, id string) string {
 	fix := strings.Split(link, "://")
 	fix[0] = "http"
 	link = strings.Join(fix, "://")
+	links = link
 
-	re := regexp.MustCompile(`(109[0-9]|1100)`)
-
-	command1 := "youtube-dl --list-formats " + link
-	cmdString1 := strings.TrimSuffix(command1, "\n")
-	cmdString3 := strings.Fields(cmdString1)
-
-	format, err := exec.Command(cmdString3[0], cmdString3[1:]...).Output()
-
-	if err != nil {
-		fmt.Println(err)
-		return "error"
+	var link2 string
+	select {
+	case link2 = <-CheckLink():
+	case link2 = <-GetFormat():
 	}
 
-	formatReal := string(format[:])
-	formatReal = strings.TrimSuffix(formatReal, "\n")
+	if link2 == "error" {
+		fmt.Println(id + " -> unavailable")
+		return id + " -> unavailable"
+	}
 
-	formatReal = re.FindString(formatReal) + "-0"
-
-	fmt.Println("Format -> " + formatReal)
-
-	command := "youtube-dl -f " + formatReal + " -g " + link
+	command := "youtube-dl -f " + link2 + " -g " + link
 	cmdString := strings.TrimSuffix(command, "\n")
 	cmdString2 := strings.Fields(cmdString)
 
-	link2, err := exec.Command(cmdString2[0], cmdString2[1:]...).Output()
+	link3, err := exec.Command(cmdString2[0], cmdString2[1:]...).Output()
 
 	if err != nil {
 		fmt.Println(err)
@@ -214,7 +254,7 @@ func DownloadAnime(link string, id string) string {
 
 	fmt.Println("Downloading -> " + id)
 
-	reallink := string(link2[:])
+	reallink := string(link3[:])
 	reallink = strings.TrimSuffix(reallink, "\n")
 
 	stream := new(gompeg.Media)
